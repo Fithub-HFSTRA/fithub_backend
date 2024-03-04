@@ -1,6 +1,6 @@
 # fithub_backend
  Backend for health app
-#Installation ->
+# Installation ->
 Navigate to folder and activate a python virtual enviroment ( if you hadn't created one yet, make one)
 https://docs.python.org/3/library/venv.html
 run 
@@ -11,7 +11,7 @@ After this, run:
 python manage.py makemigrations
 python manage.py migrate
 
-#Usage:
+# Usage:
 To create a super user, simply:
 python manage.py createsuperuser
 To run the server, simply:
