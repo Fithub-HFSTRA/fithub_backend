@@ -1,7 +1,9 @@
 from rest_framework import serializers
-from .models import CustomUser, Heartbeat, SleepData
+from .models import CustomUser, HeartbeatSummary, SleepData
 
 class CustomUserSerializer(serializers.ModelSerializer):
+    
+    friends = serializers.SerializerMethodField()
     class Meta:
         model = CustomUser
         fields = ['id', 'username', 'email', 'gender', 'Age', 'Weight', 'friends']  
@@ -11,10 +13,10 @@ class CustomUserSerializer(serializers.ModelSerializer):
         # This method returns a list of usernames of the user's friends
         return [friend.username for friend in obj.Friends_List.all()]
 
-class HeartbeatSerializer(serializers.ModelSerializer):
+class HeartbeatSummarySerializer(serializers.ModelSerializer):
     class Meta:
-        model = Heartbeat
-        fields = ['id', 'timestamp', 'beats_per_minute']
+        model = HeartbeatSummary
+        fields = ['id', 'start_time', 'end_time', 'average_bpm']
 
 class SleepDataSerializer(serializers.ModelSerializer):
     class Meta:

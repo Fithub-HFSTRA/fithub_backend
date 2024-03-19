@@ -2,15 +2,26 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import CustomUser
-from .serializers import CustomUserSerializer
+from .serializers import CustomUserSerializer, HeartbeatSummarySerializer, SleepDataSerializer
+
+class UserInfoView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        serializer = CustomUserSerializer(user)
+        return Response(serializer.data)  # Return all user data, including gender
 
 class UserGenderView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
         user = request.user
-        serializer = CustomUserSerializer(user)
-        return Response(serializer.data)  # Return all user data, including gender
+        print(user)  # Debug: Check the user
+        data = user.gender
+        if data is None:
+            return Response(None)
+        return Response(data)
 
     def post(self, request, *args, **kwargs):
         user = request.user
@@ -35,11 +46,10 @@ class UserAge(APIView):
     def get(self, request, *args, **kwargs):
         user = request.user
         print(user)  # Debug: Check the user
-        if not user.is_authenticated:
-            return Response({"detail": "hmmm."}, status=401)
-        serializer = CustomUserSerializer(user)
-        return Response(serializer.data)
-
+        data = user.Age
+        if data is None:
+            return Response(None)
+        return Response(data)
 
     def post(self, request, *args, **kwargs):
         user = request.user
@@ -68,7 +78,10 @@ class UserWeight(APIView):
     def get(self, request, *args, **kwargs):
         user = request.user
         print(user)
-        return Response(user.Weight)
+        data = user.Weight
+        if data is None:
+            return Response('null')
+        return Response(data)
     
     def post(self, request, *args, **kwargs):
         user = request.user
@@ -96,8 +109,9 @@ class UserFriend(APIView):
     def get(self, request, *args, **kwargs):
         user = request.user
         friends = user.Friends_List.all()
-        friends_data = [friend.username for friend in friends]  # List of friend usernames
-        print(user)
+        if not friends.exists():  # Check if the user has no friends
+            return Response(None)  # Return `null` if there are no friends
+        friends_data = [friend.username for friend in friends]
         return Response(friends_data)
         
     
@@ -125,32 +139,40 @@ class UserFriend(APIView):
         else:
             return Response({'error': 'Missing required fields'}, status=400)
         
-class HeartbeatListCreate(APIView):
+class HeartbeatSummary(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        heartbeats = Heartbeat.objects.filter(user=request.user)
-        serializer = HeartbeatSerializer(heartbeats, many=True)
-        return Response(serializer.data)
+        # Correctly access the related HeartbeatSummary objects using the related_name
+        summaries = request.user.heartbeat_summaries.all()  # Use the related_name 'heartbeat_summaries'
+        if summaries.exists():
+            serializer = HeartbeatSummarySerializer(summaries, many=True)
+            return Response(serializer.data)
+        else:
+            return Response('null')  # Return `null` if there are no summaries
 
     def post(self, request):
-        serializer = HeartbeatSerializer(data=request.data)
+        serializer = HeartbeatSummarySerializer(data=request.data)
         if serializer.is_valid():
             serializer.save(user=request.user)
-            return Response(serializer.data, status=201)
-        return Response(serializer.errors, status=400)
+            return Response('success', status=201)
+        return Response('error', status=400)
     
-class SleepDataListCreate(APIView):
+class SleepData(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        sleep_data = SleepData.objects.filter(user=request.user)
-        serializer = SleepDataSerializer(sleep_data, many=True)
-        return Response(serializer.data)
+        # Correctly access the related HeartbeatSummary objects using the related_name
+        summaries = request.user.sleepdata.all()  # Use the related_name 'heartbeat_summaries'
+        if summaries.exists():
+            serializer = SleepDataSerializer(summaries, many=True)
+            return Response(serializer.data)
+        else:
+            return Response('null')  # Return `null` if there are no summaries
 
     def post(self, request):
         serializer = SleepDataSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save(user=request.user)
-            return Response(serializer.data, status=201)
-        return Response(serializer.errors, status=400)
+            return Response('success', status=201)
+        return Response('error', status=400)

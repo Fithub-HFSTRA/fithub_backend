@@ -18,16 +18,17 @@ class CustomUser(AbstractUser):
     def __str__(self):
         return self.username
     
-class Heartbeat(models.Model):
-    user = models.ForeignKey(CustomUser, related_name='heartbeats', on_delete=models.CASCADE)
-    timestamp = models.DateTimeField(auto_now_add=True)
-    beats_per_minute = models.IntegerField()
+class HeartbeatSummary(models.Model):
+    user = models.ForeignKey(CustomUser, related_name='heartbeat_summaries', on_delete=models.CASCADE)
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField()
+    average_bpm = models.IntegerField()
 
     def __str__(self):
-        return f'{self.user.username} - {self.timestamp} - BPM: {self.beats_per_minute}'
+        return f'{self.user.username} - From {self.start_time} to {self.end_time} - Avg BPM: {self.average_bpm}'
     
 class SleepData(models.Model):
-    user = models.ForeignKey(CustomUser, related_name='sleep_data', on_delete=models.CASCADE)
+    user = models.ForeignKey(CustomUser, related_name='sleepdata', on_delete=models.CASCADE)
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
 
