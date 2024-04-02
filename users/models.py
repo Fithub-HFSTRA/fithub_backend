@@ -7,13 +7,24 @@ class CustomUser(AbstractUser):
         ('F', 'Female'),
         ('O', 'Other'),
     )
+
+    BLOOD_TYPES = (
+        ('AP', 'A+'),
+        ('AN', 'A-'),
+        ('BP', 'B+'),
+        ('BN', 'B-'),
+        ('ABP', 'AB+'),
+        ('ABN', 'AB-'),
+        ('OP', 'O+'),
+        ('ON', 'O-'),
+    )
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES, blank=True, null=True)
 
     Age = models.CharField(max_length=1, blank=True, null=True)
 
     Weight = models.CharField(max_length=1, blank=True, null=True)
 
-    first_login = models.BooleanField(blank=False,null=False,default=True)
+    first_login = models.BooleanField(blank=True,null=False,default=True)
 
     Friends_List = models.ManyToManyField('self', blank=True, symmetrical=False)
 
@@ -22,6 +33,12 @@ class CustomUser(AbstractUser):
     first_name = models.CharField(max_length=30, blank=True)
 
     last_name = models.CharField(max_length=30, blank=True)
+
+    blood_type = models.CharField(max_length=10,choices=BLOOD_TYPES,null=True, blank=True)
+
+    wheel_chair = models.BooleanField(blank=True,null=False,default=False)
+
+    height = models.PositiveIntegerField(null=True, blank=True)
 
     def __str__(self):
         return self.username

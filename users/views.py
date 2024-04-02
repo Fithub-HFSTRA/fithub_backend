@@ -6,7 +6,15 @@ from .serializers import CustomUserSerializer, HeartbeatSummarySerializer, Sleep
 
 class UserInfoView(APIView):
     permission_classes = [IsAuthenticated]
-    
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        serializer = CustomUserSerializer(user, data=request.data, partial=True)
+        print(request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"success": "User information updated successfully."}, status=200)
+        return Response(serializer.errors, status=400)
+
     def get(self, request, *args, **kwargs):
         user = request.user
         serializer = CustomUserSerializer(user)
@@ -134,6 +142,7 @@ class UserFriend(APIView):
             if action == 'send_request':
                 # Logic to send a friend request
                 user.pending_friend_requests.add(friend)
+                friend.received_friend_requests.add(user)
                 return Response({'message': 'Friend request sent successfully'}, status=200)
 
             elif action == 'accept_request':
@@ -141,6 +150,7 @@ class UserFriend(APIView):
                 if friend in user.received_friend_requests.all():
                     user.Friends_List.add(friend)
                     user.received_friend_requests.remove(friend)
+                    friend.pending_friend_requests.remove(user)
                     friend.Friends_List.add(user)  # Ensure friendship is mutual
                     return Response({'message': 'Friend request accepted'}, status=200)
                 else:
@@ -161,6 +171,7 @@ class UserFriend(APIView):
                 # Logic to cancel a sent friend request
                 if friend in user.pending_friend_requests.all():
                     user.pending_friend_requests.remove(friend)
+                    friend.received_friend_requests.remove(user)
                     return Response({'message': 'Friend request cancelled'}, status=200)
                 else:
                     return Response({'error': 'Friend request not found'}, status=404)
@@ -175,7 +186,7 @@ class UserFriend(APIView):
 
             else:
                 return Response({'error': 'Invalid action'}, status=400)
-        
+        return Response({'error': 'must specify friend+action'}, status=400)
         
 class HeartbeatSummary(APIView):
     permission_classes = [IsAuthenticated]
