@@ -15,6 +15,12 @@ class CustomUser(AbstractUser):
 
     Friends_List = models.ManyToManyField('self', blank=True, symmetrical=False)
 
+    pending_friend_requests = models.ManyToManyField('self', symmetrical=False, related_name='received_friend_requests', blank=True)
+
+    first_name = models.CharField(max_length=30, blank=True)
+
+    last_name = models.CharField(max_length=30, blank=True)
+
     def __str__(self):
         return self.username
     

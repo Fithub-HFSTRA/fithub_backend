@@ -2,7 +2,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import CustomUser
-from .serializers import CustomUserSerializer, HeartbeatSummarySerializer, SleepDataSerializer
+from .serializers import CustomUserSerializer, HeartbeatSummarySerializer, SleepDataSerializer, UserRegistrationSerializer
 
 class UserInfoView(APIView):
     permission_classes = [IsAuthenticated]
@@ -14,14 +14,6 @@ class UserInfoView(APIView):
 
 class UserGenderView(APIView):
     permission_classes = [IsAuthenticated]
-
-    def get(self, request, *args, **kwargs):
-        user = request.user
-        print(user)  # Debug: Check the user
-        data = user.gender
-        if data is None:
-            return Response(None)
-        return Response(data)
 
     def post(self, request, *args, **kwargs):
         user = request.user
@@ -38,18 +30,10 @@ class UserGenderView(APIView):
         user.gender = new_gender
         user.save(update_fields=['gender'])
 
-        return Response({"success": "Gender updated successfully."})
+        return Response({"success": "Gender updated successfully."}, status=200)
 
 class UserAge(APIView):
     permission_classes = [IsAuthenticated]
-
-    def get(self, request, *args, **kwargs):
-        user = request.user
-        print(user)  # Debug: Check the user
-        data = user.Age
-        if data is None:
-            return Response(None)
-        return Response(data)
 
     def post(self, request, *args, **kwargs):
         user = request.user
@@ -70,19 +54,11 @@ class UserAge(APIView):
         user.Age = new_age
         user.save(update_fields=['Age'])
 
-        return Response({"success": "Age updated successfully."})
+        return Response({"success": "Age updated successfully."}, status=200)
 
 class UserWeight(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, *args, **kwargs):
-        user = request.user
-        print(user)
-        data = user.Weight
-        if data is None:
-            return Response('null')
-        return Response(data)
-    
     def post(self, request, *args, **kwargs):
         user = request.user
         # Extract the 'age' value from the request data
@@ -101,18 +77,29 @@ class UserWeight(APIView):
         user.Weight = new_weight
         user.save(update_fields=['Weight'])
 
-        return Response({"success": "Weight updated successfully."})
+        return Response({"success": "Weight updated successfully."}, status=200)
 
 class UserFriend(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
         user = request.user
-        friends = user.Friends_List.all()
-        if not friends.exists():  # Check if the user has no friends
-            return Response(None)  # Return `null` if there are no friends
-        friends_data = [friend.username for friend in friends]
-        return Response(friends_data)
+        #friends = user.Friends_List.all()
+        #if not friends.exists():  # Check if the user has no friends
+        #    return Response(None)  # Return `null` if there are no friends
+        #friends_data = [friend.username for friend in friends]
+        #return Response(friends_data)
+        friends = [friend.username for friend in user.Friends_List.all()]
+        sent_friend_requests = [user.username for user in user.pending_friend_requests.all()]
+        received_friend_requests = [user.username for user in user.received_friend_requests.all()]
+
+        data = {
+            'friends': friends,
+            'sent_friend_requests': sent_friend_requests,
+            'received_friend_requests': received_friend_requests
+        }
+
+        return Response(data)
         
     
     def post(self, request, *args, **kwargs):
@@ -120,24 +107,75 @@ class UserFriend(APIView):
         action = request.data.get('action')
         friend_username = request.data.get('friend_username')
 
+        #if action and friend_username:
+        #    try:
+        #        friend = CustomUser.objects.get(username=friend_username)
+        #        
+        #        if action == 'add':
+        #            user.Friends_List.add(friend)
+        #            return Response({'message': 'Friend added successfully'}, status=200)
+        #        
+        #        elif action == 'delete':
+        #            user.Friends_List.remove(friend)
+        #            return Response({'message': 'Friend removed successfully'}, status=200)
+        #        
+        #        else:
+        #            return Response({'error': 'Invalid action'}, status=400)
+        #    except user.DoesNotExist:
+        #        return Response({'error': 'User not found'}, status=404)
+        #else:
+        #    return Response({'error': 'Missing required fields'}, status=400)
         if action and friend_username:
             try:
                 friend = CustomUser.objects.get(username=friend_username)
-                
-                if action == 'add':
-                    user.Friends_List.add(friend)
-                    return Response({'message': 'Friend added successfully'})
-                
-                elif action == 'delete':
-                    user.Friends_List.remove(friend)
-                    return Response({'message': 'Friend removed successfully'})
-                
-                else:
-                    return Response({'error': 'Invalid action'}, status=400)
-            except user.DoesNotExist:
+            except CustomUser.DoesNotExist:
                 return Response({'error': 'User not found'}, status=404)
-        else:
-            return Response({'error': 'Missing required fields'}, status=400)
+
+            if action == 'send_request':
+                # Logic to send a friend request
+                user.pending_friend_requests.add(friend)
+                return Response({'message': 'Friend request sent successfully'}, status=200)
+
+            elif action == 'accept_request':
+                # Logic to accept a friend request
+                if friend in user.received_friend_requests.all():
+                    user.Friends_List.add(friend)
+                    user.received_friend_requests.remove(friend)
+                    friend.Friends_List.add(user)  # Ensure friendship is mutual
+                    return Response({'message': 'Friend request accepted'}, status=200)
+                else:
+                    return Response({'error': 'Friend request not found'}, status=404)
+
+            elif action == 'delete_friend':
+                # Logic to delete a confirmed friend
+                if friend in user.Friends_List.all():
+                    #user.friends.remove(friend)
+                    user.Friends_List.remove(friend)
+                    #friend.friends.remove(user)  # Ensure to remove from both sides
+                    friend.Friends_List.remove(user) 
+                    return Response({'message': 'Friend removed successfully'}, status=200)
+                else:
+                    return Response({'error': 'Friend not found in friend list'}, status=404)
+
+            elif action == 'cancel_request':
+                # Logic to cancel a sent friend request
+                if friend in user.pending_friend_requests.all():
+                    user.pending_friend_requests.remove(friend)
+                    return Response({'message': 'Friend request cancelled'}, status=200)
+                else:
+                    return Response({'error': 'Friend request not found'}, status=404)
+
+            elif action == 'reject_request':
+                # Logic to reject a received friend request
+                if friend in user.received_friend_requests.all():
+                    user.received_friend_requests.remove(friend)
+                    return Response({'message': 'Friend request rejected'}, status=200)
+                else:
+                    return Response({'error': 'Friend request not found'}, status=404)
+
+            else:
+                return Response({'error': 'Invalid action'}, status=400)
+        
         
 class HeartbeatSummary(APIView):
     permission_classes = [IsAuthenticated]
@@ -176,3 +214,31 @@ class SleepData(APIView):
             serializer.save(user=request.user)
             return Response('success', status=201)
         return Response('error', status=400)
+
+class NameData(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        new_first_name = request.data.get('first_name')
+        new_last_name = request.data.get('last_name')
+
+        #validation
+        if (new_first_name or new_last_name) is None:
+            return Response({"error": "First name and last name is required."}, status=400)
+        
+        #store
+        user.first_name = new_first_name
+        user.last_name = new_last_name
+        user.save(update_fields=['first_name'])
+        user.save(update_fields=['last_name'])
+        return Response({"success": "Name updated successfully."}, status=200)
+    
+#For user register API
+class SignupView(APIView):
+    def post(self, request, *args, **kwargs):
+        serializer = UserRegistrationSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "User created successfully."}, status=201)
+        return Response(serializer.errors, status=400)
