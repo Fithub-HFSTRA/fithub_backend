@@ -13,6 +13,8 @@ class CustomUser(AbstractUser):
 
     Weight = models.CharField(max_length=1, blank=True, null=True)
 
+    first_login = models.BooleanField(blank=False,null=False,default=True)
+
     Friends_List = models.ManyToManyField('self', blank=True, symmetrical=False)
 
     def __str__(self):

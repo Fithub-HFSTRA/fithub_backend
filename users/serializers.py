@@ -6,7 +6,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
     friends = serializers.SerializerMethodField()
     class Meta:
         model = CustomUser
-        fields = ['id', 'username', 'email', 'gender', 'Age', 'Weight', 'friends']  
+        fields = ['id', 'username', 'email', 'gender', 'Age', 'Weight', 'friends','first_login']  
 
         # The method to get the data for the 'friends' field
     def get_friends(self, obj):
