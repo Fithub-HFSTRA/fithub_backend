@@ -1,7 +1,7 @@
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .models import CustomUser
+from .models import CustomUser, Plan,Workout_Type
 from .serializers import CustomUserSerializer, HeartbeatSummarySerializer, SleepDataSerializer, UserRegistrationSerializer
 
 class UserInfoView(APIView):
@@ -59,7 +59,7 @@ class UserAge(APIView):
         except ValueError as e:
             return Response({"error": str(e)}, status=400)
 
-        user.Age = new_age
+        user.age = new_age
         user.save(update_fields=['Age'])
 
         return Response({"success": "Age updated successfully."}, status=200)
@@ -86,6 +86,35 @@ class UserWeight(APIView):
         user.save(update_fields=['Weight'])
 
         return Response({"success": "Weight updated successfully."}, status=200)
+
+
+class UserPlan(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        plan = user.current_workout_plan
+        workouts = plan.workouts.all()
+
+        # Create a list to store exercises for each day of the week
+        workout_days = [[] for _ in range(7)]
+        
+        for workout in workouts:
+            # Convert the workout_days integer to a binary string
+            days_binary = bin(workout.workout_days)[2:].zfill(7)
+
+            # Iterate over each day of the week
+            for day in range(7):
+                if days_binary[day] == '1':
+                    # If the day is active, add the workout to the corresponding day's list
+                    workout_days[day].append({"name":str(workout),"type":str(workout.workout_type.category),"time":workout.workout_length})
+        data = {
+            'workout_days':workout_days,
+            "plan_name":plan.name
+        }
+
+        return Response(data)
+    
 
 class UserFriend(APIView):
     permission_classes = [IsAuthenticated]
@@ -142,7 +171,6 @@ class UserFriend(APIView):
             if action == 'send_request':
                 # Logic to send a friend request
                 user.pending_friend_requests.add(friend)
-                friend.received_friend_requests.add(user)
                 return Response({'message': 'Friend request sent successfully'}, status=200)
 
             elif action == 'accept_request':
@@ -150,7 +178,6 @@ class UserFriend(APIView):
                 if friend in user.received_friend_requests.all():
                     user.Friends_List.add(friend)
                     user.received_friend_requests.remove(friend)
-                    friend.pending_friend_requests.remove(user)
                     friend.Friends_List.add(user)  # Ensure friendship is mutual
                     return Response({'message': 'Friend request accepted'}, status=200)
                 else:
@@ -171,7 +198,6 @@ class UserFriend(APIView):
                 # Logic to cancel a sent friend request
                 if friend in user.pending_friend_requests.all():
                     user.pending_friend_requests.remove(friend)
-                    friend.received_friend_requests.remove(user)
                     return Response({'message': 'Friend request cancelled'}, status=200)
                 else:
                     return Response({'error': 'Friend request not found'}, status=404)
