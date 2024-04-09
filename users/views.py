@@ -1,7 +1,7 @@
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .models import CustomUser, Plan,Workout_Type
+from .models import CustomUser, Plan,Workout_Type,Workout
 from .serializers import CustomUserSerializer, HeartbeatSummarySerializer, SleepDataSerializer, UserRegistrationSerializer
 
 class UserInfoView(APIView):
@@ -87,33 +87,81 @@ class UserWeight(APIView):
 
         return Response({"success": "Weight updated successfully."}, status=200)
 
-
 class UserPlan(APIView):
     permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+
+        # Get the plan data from the request
+        name = request.data.get('name')
+        description = request.data.get('description')
+        difficulty_level = request.data.get('difficulty_level')
+        workouts_data = request.data.get('workouts')
+
+        # Create a new plan instance
+        plan = Plan.objects.create(
+            name=name,
+            creator=user,
+            description=description,
+            difficulty_level=difficulty_level
+        )
+
+        # Create workout instances and associate them with the plan
+        for workout_data in workouts_data:
+            workout_type_name = workout_data.get('workout_type')
+            workout_days = workout_data.get('workout_days')
+            workout_length = workout_data.get('workout_length')
+            description = workout_data.get('description')
+            equipment_needed = workout_data.get('equipment_needed')
+
+            workout_type, _ = Workout_Type.objects.get_or_create(name=workout_type_name)
+
+            workout = Workout.objects.create(
+                workout_type=workout_type,
+                workout_days=workout_days,
+                workout_length=workout_length,
+                description=description,
+                equipment_needed=equipment_needed
+            )
+
+            plan.workouts.add(workout)
+
+        # Assign the created plan to the user
+        user.current_workout_plan = plan
+        user.save()
+
+        return Response({'message': 'Custom plan created and assigned successfully.'}, status=status.HTTP_201_CREATED)
 
     def get(self, request, *args, **kwargs):
         user = request.user
         plan = user.current_workout_plan
         workouts = plan.workouts.all()
-
+        
         # Create a list to store exercises for each day of the week
         workout_days = [[] for _ in range(7)]
         
         for workout in workouts:
             # Convert the workout_days integer to a binary string
             days_binary = bin(workout.workout_days)[2:].zfill(7)
-
+            
             # Iterate over each day of the week
             for day in range(7):
                 if days_binary[day] == '1':
                     # If the day is active, add the workout to the corresponding day's list
-                    workout_days[day].append({"name":str(workout),"type":str(workout.workout_type.category),"time":workout.workout_length})
+                    workout_days[day].append({
+                        "name": str(workout),
+                        "type": str(workout.workout_type.category),
+                        "time": workout.workout_length
+                    })
+        
         data = {
-            'workout_days':workout_days,
-            "plan_name":plan.name
+            'workout_days': workout_days,
+            "plan_name": plan.name
         }
-
+        
         return Response(data)
+
     
 
 class UserFriend(APIView):
