@@ -23,7 +23,7 @@ class Workout(models.Model):
     #days as defined by days of the week-> each plan is done on a per-week basis and the days are 7 bit number
     #such that the days that are on(left to right) are one, and days that are off are 0
     #E.G 1000000 = 64, so a number of 64 means we only work on the first day.
-    workout_days = models.PositiveIntegerField(help_text='days that we do the workout', blank=True, null=True)
+    workout_days = models.PositiveIntegerField(help_text='days that we do the workout', blank=True, null=False)
     #in minutes
     workout_length = models.PositiveIntegerField(help_text='Duration of the workout in minutes', blank=True, null=True)
     description = models.TextField(blank=True, null=True)

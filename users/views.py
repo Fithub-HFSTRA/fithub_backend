@@ -95,10 +95,10 @@ class UserPlan(APIView):
         user = request.user
 
         # Get the plan data from the request
-        name = request.data.get('name')
+        name = request.data.get('plan_name')
         description = request.data.get('description')
         difficulty_level = request.data.get('difficulty_level')
-        workouts_data = request.data.get('workouts')
+        workouts_data = request.data.get('workout_days')
 
         # Create a new plan instance
         plan = Plan.objects.create(
@@ -110,14 +110,12 @@ class UserPlan(APIView):
 
         # Create workout instances and associate them with the plan
         for workout_data in workouts_data:
-            workout_type_name = workout_data.get('workout_type')
-            workout_days = workout_data.get('workout_days')
-            workout_length = workout_data.get('workout_length')
+            workout_type_name = workout_data.get('name')
+            workout_days = workout_data.get('days')
+            workout_length = workout_data.get('time')
             description = workout_data.get('description')
             equipment_needed = workout_data.get('equipment_needed')
-
             workout_type, _ = Workout_Type.objects.get_or_create(name=workout_type_name)
-
             workout = Workout.objects.create(
                 workout_type=workout_type,
                 workout_days=workout_days,
@@ -125,14 +123,13 @@ class UserPlan(APIView):
                 description=description,
                 equipment_needed=equipment_needed
             )
-
             plan.workouts.add(workout)
 
         # Assign the created plan to the user
         user.current_workout_plan = plan
         user.save()
 
-        return Response({'message': 'Custom plan created and assigned successfully.'}, status=status.HTTP_201_CREATED)
+        return Response({'message': 'Custom plan created and assigned successfully.'})
 
     def get(self, request, *args, **kwargs):
         user = request.user
