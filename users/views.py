@@ -64,6 +64,7 @@ class UserAge(APIView):
 
         return Response({"success": "Age updated successfully."}, status=200)
 
+
 class UserWeight(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -136,6 +137,9 @@ class UserPlan(APIView):
     def get(self, request, *args, **kwargs):
         user = request.user
         plan = user.current_workout_plan
+        if(plan == None or plan.workouts.all().count() == 0):
+            print("what? thre's no plans?")
+            return Response(None);
         workouts = plan.workouts.all()
         
         # Create a list to store exercises for each day of the week
@@ -158,6 +162,26 @@ class UserPlan(APIView):
         data = {
             'workout_days': workout_days,
             "plan_name": plan.name
+        }
+        
+        return Response(data)
+class UserWorkoutTypes(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request, *args, **kwargs):
+        Workout_Types = Workout_Type.objects.all()
+        if(Workout_Types == None or Workout_Types.count() == 0):
+            return Response("ERROR: No workout types found");        
+        # Create a list to store exercises for each day of the week
+        Workout_Types_Results = []
+        
+        for workout_type in Workout_Types:
+            Workout_Types_Results.append({
+                "name": str(workout_type.name),
+                "category": str(workout_type.category),
+            })
+        
+        data = {
+            'workout_types': Workout_Types_Results,
         }
         
         return Response(data)
