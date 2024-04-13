@@ -115,7 +115,8 @@ class UserPlan(APIView):
             workout_length = workout_data.get('time')
             description = workout_data.get('description')
             equipment_needed = workout_data.get('equipment_needed')
-            workout_type, _ = Workout_Type.objects.get_or_create(name=workout_type_name)
+            
+            workout_type, _ = Workout_Type.objects.get_or_create(name=workout_type_name.strip(), defaults={'name': workout_type_name})
             workout = Workout.objects.create(
                 workout_type=workout_type,
                 workout_days=workout_days,
@@ -213,24 +214,6 @@ class UserFriend(APIView):
         action = request.data.get('action')
         friend_username = request.data.get('friend_username')
 
-        #if action and friend_username:
-        #    try:
-        #        friend = CustomUser.objects.get(username=friend_username)
-        #        
-        #        if action == 'add':
-        #            user.Friends_List.add(friend)
-        #            return Response({'message': 'Friend added successfully'}, status=200)
-        #        
-        #        elif action == 'delete':
-        #            user.Friends_List.remove(friend)
-        #            return Response({'message': 'Friend removed successfully'}, status=200)
-        #        
-        #        else:
-        #            return Response({'error': 'Invalid action'}, status=400)
-        #    except user.DoesNotExist:
-        #        return Response({'error': 'User not found'}, status=404)
-        #else:
-        #    return Response({'error': 'Missing required fields'}, status=400)
         if action and friend_username:
             try:
                 friend = CustomUser.objects.get(username=friend_username)
