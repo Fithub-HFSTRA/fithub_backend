@@ -1,7 +1,8 @@
+import datetime
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .models import CustomUser, Plan,Workout_Type,Workout
+from .models import CustomUser, Plan,Workout_Type,Workout,Exercise
 from .serializers import CustomUserSerializer, HeartbeatSummarySerializer, SleepDataSerializer, UserRegistrationSerializer
 
 class UserInfoView(APIView):
@@ -39,6 +40,39 @@ class UserGenderView(APIView):
         user.save(update_fields=['gender'])
 
         return Response({"success": "Gender updated successfully."}, status=200)
+    
+def stringIntoDateTime(string):
+    return datetime.strptime(string, '%Y-%m-%d %H:%M:%S')
+class startExercise(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        #check to see if latest exercise is still going
+        if(user.exercises.all().count() > 0):
+            latestExercise = user.exercises.all().last()
+            if(latestExercise.end_time == None):
+                return Response({"error": "User is already exercising"}, status=400)
+            
+        exercise = Exercise.objects.create(
+            workout_type = Workout_Type.objects.get_or_create(name=request.data.get('workout_type')),
+            start_time = stringIntoDateTime(request.data.get('start_time')),
+            end_time = None,
+            fuffilment = request.data.get('fuffilment'),
+        )
+        user.exercises.add(exercise)
+
+class endExercise(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        #check to see if latest exercise is still going
+        if(user.exercises.all().count() == 0 or user.exercises.all().last().end_time != None):
+            return Response({"error": "User is not exercising"}, status=400)
+        #check to see if it hasn't been too long since the excercise started
+        exercise = user.exercises.all().last()
+        exercise.end_time = stringIntoDateTime(request.data.get('end_time'))
+
+
 
 class UserAge(APIView):
     permission_classes = [IsAuthenticated]
@@ -145,11 +179,9 @@ class UserPlan(APIView):
         
         for workout in workouts:
             # Convert the workout_days integer to a binary string
-            days_binary = bin(workout.workout_days)[2:].zfill(7)
-            
             # Iterate over each day of the week
             for day in range(7):
-                if days_binary[day] == '1':
+                if workout.workout_days & (1 << day):
                     # If the day is active, add the workout to the corresponding day's list
                     workout_days[day].append({
                         "name": str(workout),

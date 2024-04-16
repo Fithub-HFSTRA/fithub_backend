@@ -31,6 +31,15 @@ class Workout(models.Model):
 
     def __str__(self):
         return f'{self.workout_type.name} '
+    
+
+class Exercise(models.Model):
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField()
+    workout_type = models.ForeignKey(Workout_Type, on_delete=models.CASCADE)
+    fuffilment = models.BooleanField(blank=True, null=False, default=False)
+    def __str__(self):
+        return f'{self.workout_type.name} '
 
 class Plan(models.Model):
     name = models.CharField(max_length=30, blank=True)
@@ -65,6 +74,7 @@ class CustomUser(AbstractUser):
     first_login = models.BooleanField(blank=True, null=False, default=True)
     friends_list = models.ManyToManyField('self', blank=True, symmetrical=False)
     pending_friend_requests = models.ManyToManyField('self', symmetrical=False, related_name='received_friend_requests', blank=True)
+    exercises = models.ManyToManyField(Exercise)
     first_name = models.CharField(max_length=30, blank=True)
     last_name = models.CharField(max_length=30, blank=True)
     blood_type = models.CharField(max_length=10, choices=BLOOD_TYPES, null=True, blank=True)
