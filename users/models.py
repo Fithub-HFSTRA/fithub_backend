@@ -35,7 +35,7 @@ class Workout(models.Model):
 
 class Exercise(models.Model):
     start_time = models.DateTimeField()
-    end_time = models.DateTimeField()
+    end_time = models.DateTimeField(null=True)
     workout_type = models.ForeignKey(Workout_Type, on_delete=models.CASCADE)
     fuffilment = models.BooleanField(blank=True, null=False, default=False)
     def __str__(self):

@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import CustomUser, Plan,Workout_Type,Workout,Exercise
 from .serializers import CustomUserSerializer, HeartbeatSummarySerializer, SleepDataSerializer, UserRegistrationSerializer
+from django.utils import timezone
 
 class UserInfoView(APIView):
     permission_classes = [IsAuthenticated]
@@ -42,7 +43,9 @@ class UserGenderView(APIView):
         return Response({"success": "Gender updated successfully."}, status=200)
     
 def stringIntoDateTime(string):
-    return datetime.strptime(string, '%Y-%m-%d %H:%M:%S')
+    print("whaaa",string)
+    return "what"
+
 class startExercise(APIView):
     permission_classes = [IsAuthenticated]
     def post(self, request, *args, **kwargs):
@@ -53,11 +56,12 @@ class startExercise(APIView):
             if(latestExercise.end_time == None):
                 return Response({"error": "User is already exercising"}, status=400)
         user.is_working = True
+        ins_wt, _ =  Workout_Type.objects.get_or_create(name=request.data.get('name'))
         exercise = Exercise.objects.create(
-            workout_type = Workout_Type.objects.get_or_create(name=request.data.get('workout_type')),
-            start_time = stringIntoDateTime(request.data.get('start_time')),
+            workout_type=ins_wt,
+            start_time = timezone.now(),
             end_time = None,
-            fuffilment = request.data.get('fuffilment'),
+            fuffilment = False,
         )
         user.exercises.add(exercise)
 
@@ -85,8 +89,8 @@ class getAllExercises(APIView):
             ret_list.append({
                 "start":str(itera.start_time),
                 "end":str(itera.end_time),
-                "name":itera.Workout_Type.name,
-                "category":itera.Workout_Type.category
+                "name":itera.workout_type.name,
+                "category":itera.workout_type.category
             })
         data = {
             'ex': ret_list,

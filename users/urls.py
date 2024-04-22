@@ -14,4 +14,7 @@ urlpatterns = [
     path('name_update/', views.NameData.as_view(), name='users'),
     path('signup/', views.SignupView.as_view(), name='signup'),
     path('exercise_all/', views.getAllExercises.as_view(), name='excercises'),
+    path('strt_ex/', views.startExercise.as_view(), name='start excercises'),
+    path('end_ex/', views.endExercise.as_view(), name='end excercises'),
+
 ]
