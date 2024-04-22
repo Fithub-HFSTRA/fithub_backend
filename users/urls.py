@@ -13,4 +13,5 @@ urlpatterns = [
     path('sleep_data/', views.SleepData.as_view(), name='sleep_data'),
     path('name_update/', views.NameData.as_view(), name='users'),
     path('signup/', views.SignupView.as_view(), name='signup'),
+    path('exercise_all/', views.getAllExercises.as_view(), name='excercises'),
 ]

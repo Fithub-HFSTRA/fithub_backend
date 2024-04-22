@@ -52,7 +52,7 @@ class startExercise(APIView):
             latestExercise = user.exercises.all().last()
             if(latestExercise.end_time == None):
                 return Response({"error": "User is already exercising"}, status=400)
-            
+        user.is_working = True
         exercise = Exercise.objects.create(
             workout_type = Workout_Type.objects.get_or_create(name=request.data.get('workout_type')),
             start_time = stringIntoDateTime(request.data.get('start_time')),
@@ -69,10 +69,30 @@ class endExercise(APIView):
         if(user.exercises.all().count() == 0 or user.exercises.all().last().end_time != None):
             return Response({"error": "User is not exercising"}, status=400)
         #check to see if it hasn't been too long since the excercise started
+        user.is_working = False
         exercise = user.exercises.all().last()
         exercise.end_time = stringIntoDateTime(request.data.get('end_time'))
 
-
+class getAllExercises(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        print('dink')
+        #check to see if latest exercise is still going
+        iter_list = user.exercises.all()
+        ret_list = []
+        for itera in iter_list:
+            ret_list.append({
+                "start":str(itera.start_time),
+                "end":str(itera.end_time),
+                "name":itera.Workout_Type.name,
+                "category":itera.Workout_Type.category
+            })
+        data = {
+            'ex': ret_list,
+        }
+        
+        return Response(data)
 
 class UserAge(APIView):
     permission_classes = [IsAuthenticated]

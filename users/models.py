@@ -23,7 +23,7 @@ class Workout(models.Model):
     #days as defined by days of the week-> each plan is done on a per-week basis and the days are 7 bit number
     #such that the days that are on(left to right) are one, and days that are off are 0
     #E.G 1000000 = 64, so a number of 64 means we only work on the first day.
-    workout_days = models.PositiveIntegerField(help_text='days that we do the workout', blank=True, null=False)
+    workout_days = models.PositiveIntegerField(help_text='days that we do the workout',default=0,blank=True, null=False)
     #in minutes
     workout_length = models.PositiveIntegerField(help_text='Duration of the workout in minutes', blank=True, null=True)
     description = models.TextField(blank=True, null=True)
@@ -80,7 +80,7 @@ class CustomUser(AbstractUser):
     blood_type = models.CharField(max_length=10, choices=BLOOD_TYPES, null=True, blank=True)
     wheelchair = models.BooleanField(blank=True, null=False, default=False)
     height = models.FloatField(null=True, blank=True, help_text='Height in centimeters')
-
+    is_working = models.BooleanField(blank=True, null=False, default=False)
     def __str__(self):
         return self.username
 
