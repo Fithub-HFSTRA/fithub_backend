@@ -247,12 +247,12 @@ class UserFriend(APIView):
 
     def get(self, request, *args, **kwargs):
         user = request.user
-        #friends = user.Friends_List.all()
+        #friends = user.friends_list.all()
         #if not friends.exists():  # Check if the user has no friends
         #    return Response(None)  # Return `null` if there are no friends
         #friends_data = [friend.username for friend in friends]
         #return Response(friends_data)
-        friends = [friend.username for friend in user.Friends_List.all()]
+        friends = [friend.username for friend in user.friends_list.all()]
         sent_friend_requests = [user.username for user in user.pending_friend_requests.all()]
         received_friend_requests = [user.username for user in user.received_friend_requests.all()]
 
@@ -284,20 +284,20 @@ class UserFriend(APIView):
             elif action == 'accept_request':
                 # Logic to accept a friend request
                 if friend in user.received_friend_requests.all():
-                    user.Friends_List.add(friend)
+                    user.friends_list.add(friend)
                     user.received_friend_requests.remove(friend)
-                    friend.Friends_List.add(user)  # Ensure friendship is mutual
+                    friend.friends_list.add(user)  # Ensure friendship is mutual
                     return Response({'message': 'Friend request accepted'}, status=200)
                 else:
                     return Response({'error': 'Friend request not found'}, status=404)
 
             elif action == 'delete_friend':
                 # Logic to delete a confirmed friend
-                if friend in user.Friends_List.all():
+                if friend in user.friends_list.all():
                     #user.friends.remove(friend)
-                    user.Friends_List.remove(friend)
+                    user.friends_list.remove(friend)
                     #friend.friends.remove(user)  # Ensure to remove from both sides
-                    friend.Friends_List.remove(user) 
+                    friend.friends_list.remove(user) 
                     return Response({'message': 'Friend removed successfully'}, status=200)
                 else:
                     return Response({'error': 'Friend not found in friend list'}, status=404)
