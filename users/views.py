@@ -54,16 +54,21 @@ class startExercise(APIView):
         if(user.exercises.all().count() > 0):
             latestExercise = user.exercises.all().last()
             if(latestExercise.end_time == None):
+                user.is_working = True
+                user.save(update_fields=['is_working'])
                 return Response({"error": "User is already exercising"}, status=400)
         user.is_working = True
-        ins_wt, _ =  Workout_Type.objects.get_or_create(name=request.data.get('name'))
+        ins_wt, _ =  Workout_Type.objects.get_or_create(name=request.data.get('name').strip())
         exercise = Exercise.objects.create(
             workout_type=ins_wt,
             start_time = timezone.now(),
             end_time = None,
-            fuffilment = False,
+            fuffilment = request.data.get('time'),
         )
         user.exercises.add(exercise)
+        user.save(update_fields=['is_working'])
+        user.save(update_fields=['exercises'])
+        return Response({"success": "Age updated successfully."}, status=200)
 
 class endExercise(APIView):
     permission_classes = [IsAuthenticated]
@@ -75,7 +80,11 @@ class endExercise(APIView):
         #check to see if it hasn't been too long since the excercise started
         user.is_working = False
         exercise = user.exercises.all().last()
-        exercise.end_time = stringIntoDateTime(request.data.get('end_time'))
+        exercise.end_time = timezone.now()
+        user.save(update_fields=['is_working'])
+        exercise.save(update_fields=['end_time']);
+        return Response({"success": "Age updated successfully."}, status=200)
+
 
 class getAllExercises(APIView):
     permission_classes = [IsAuthenticated]
@@ -89,6 +98,7 @@ class getAllExercises(APIView):
             ret_list.append({
                 "start":str(itera.start_time),
                 "end":str(itera.end_time),
+                "fuffilment":str(itera.fuffilment),
                 "name":itera.workout_type.name,
                 "category":itera.workout_type.category
             })
