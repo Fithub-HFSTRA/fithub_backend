@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from .models import CustomUser, Plan,Workout_Type,Workout,Exercise
 from .serializers import CustomUserSerializer, HeartbeatSummarySerializer, SleepDataSerializer, UserRegistrationSerializer
 from django.utils import timezone
+from django.db.models import Q
 
 class UserInfoView(APIView):
     permission_classes = [IsAuthenticated]
@@ -107,6 +108,34 @@ class getAllExercises(APIView):
         }
         
         return Response(data)
+
+class FriendFeed(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+
+        # Get the list of user's friends
+        friends = user.friends_list.all()
+
+        # Get the last 100 exercises performed by the user's friends, sorted by start time
+        friend_exercises = Exercise.objects.filter(
+            customuser__in=friends
+        ).order_by('-start_time')[:100]
+
+        # Serialize the exercise data
+        exercise_data = []
+        for exercise in friend_exercises:
+            exercise_data.append({
+                'id': exercise.id,
+                'start_time': exercise.start_time,
+                'end_time': exercise.end_time,
+                'workout_type': exercise.workout_type.name,
+                'fulfillment': exercise.fuffilment,
+                'user': exercise.customuser_set.first().username,
+            })
+
+        return Response(exercise_data, status=200)
 
 class UserAge(APIView):
     permission_classes = [IsAuthenticated]
