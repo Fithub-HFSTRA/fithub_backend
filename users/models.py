@@ -25,7 +25,7 @@ class Workout(models.Model):
     #E.G 1000000 = 64, so a number of 64 means we only work on the first day.
     workout_days = models.PositiveIntegerField(help_text='days that we do the workout',default=0,blank=True, null=False)
     #in minutes
-    workout_length = models.PositiveIntegerField(help_text='Duration of the workout in minutes', blank=True, null=True)
+    workout_length = models.FloatField(help_text='Duration of the workout in minutes', blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     equipment_needed = models.CharField(max_length=100, blank=True, null=True)
 
@@ -37,7 +37,7 @@ class Exercise(models.Model):
     start_time = models.DateTimeField()
     end_time = models.DateTimeField(null=True)
     workout_type = models.ForeignKey(Workout_Type, on_delete=models.CASCADE)
-    fuffilment = models.PositiveIntegerField(blank=True, null=False, default=False)
+    fuffilment = models.FloatField(blank=True, null=False, default=False)
     def __str__(self):
         return f'{self.workout_type.name} '
 

@@ -106,8 +106,9 @@ class getAllExercises(APIView):
         data = {
             'ex': ret_list,
         }
-        
         return Response(data)
+
+
 
 class FriendFeed(APIView):
     permission_classes = [IsAuthenticated]
@@ -128,10 +129,11 @@ class FriendFeed(APIView):
         for exercise in friend_exercises:
             exercise_data.append({
                 'id': exercise.id,
-                'start_time': exercise.start_time,
-                'end_time': exercise.end_time,
-                'workout_type': exercise.workout_type.name,
-                'fulfillment': exercise.fuffilment,
+                'start': str(exercise.start_time),
+                'end': str(exercise.end_time),
+                'workout_type': {'name':exercise.workout_type.name,
+                'category':exercise.workout_type.category},
+                'expectedTime': exercise.fuffilment,
                 'user': exercise.customuser_set.first().username,
             })
 
