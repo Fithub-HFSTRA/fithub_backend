@@ -6,6 +6,8 @@ from .models import CustomUser, Plan,Workout_Type,Workout,Exercise
 from .serializers import CustomUserSerializer, HeartbeatSummarySerializer, SleepDataSerializer, UserRegistrationSerializer
 from django.utils import timezone
 from django.db.models import Q
+from datetime import datetime, timedelta
+from collections import defaultdict
 
 class UserInfoView(APIView):
     permission_classes = [IsAuthenticated]
@@ -428,3 +430,54 @@ class SignupView(APIView):
             serializer.save()
             return Response({"message": "User created successfully."}, status=201)
         return Response(serializer.errors, status=400)
+    
+class Last30DaysExercisesView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        now = timezone.now()
+        thirty_days_ago = now - timedelta(days=30)
+        
+        # Initialize day_totals for the last 30 days with zero total time
+        day_totals = {now.date() - timedelta(days=x): timedelta(0) for x in range(31)}
+
+        iter_list = user.exercises.all()
+        for itera in iter_list:
+            if itera.end_time is not None and itera.start_time >= thirty_days_ago:
+                total_time = itera.end_time - itera.start_time
+                date = itera.start_time.date()  # Get the date part of the datetime
+                if date in day_totals:
+                    day_totals[date] += total_time  # Aggregate total_time
+
+        # Convert timedelta to an appropriate format (e.g., total seconds)
+        ret_list = [{"date": date.strftime('%Y-%m-%d'), "total_time": day_totals[date].total_seconds()} for date in sorted(day_totals)]
+        
+        return Response(ret_list)
+    
+class FriendAverageWorkoutTimeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        now = timezone.now()
+        thirty_days_ago = now - timedelta(days=30)
+        friends = user.friends_list.all()
+        
+        # Initialize day_totals for the last 30 days with zero total time
+        day_totals = {now.date() - timedelta(days=x): timedelta(0) for x in range(31)}
+        total_friend_count = 0
+        for fitera in friends:
+            total_friend_count+=1
+            iter_list = fitera.exercises.all()
+            for itera in iter_list:
+                if itera.end_time is not None and itera.start_time >= thirty_days_ago:
+                    total_time = itera.end_time - itera.start_time
+                    date = itera.start_time.date()  # Get the date part of the datetime
+                    if date in day_totals:
+                        day_totals[date] += total_time  # Aggregate total_time
+
+        # Convert timedelta to an appropriate format (e.g., total seconds)
+        ret_list = [{"date": date.strftime('%Y-%m-%d'), "total_time": day_totals[date].total_seconds()/total_friend_count} for date in sorted(day_totals)]
+        
+        return Response(ret_list)

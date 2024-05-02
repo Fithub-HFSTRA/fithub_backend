@@ -17,5 +17,7 @@ urlpatterns = [
     path('strt_ex/', views.startExercise.as_view(), name='start excercises'),
     path('end_ex/', views.endExercise.as_view(), name='end excercises'),
     path('get_feed/', views.FriendFeed.as_view(), name='end excercises'),
+    path('last-30-days/', views.Last30DaysExercisesView.as_view(), name='last-30-days-exercises'),
+    path('recent_friends/', views.FriendAverageWorkoutTimeView.as_view(), name='friend-last-30-days-exercises'),
 
 ]
