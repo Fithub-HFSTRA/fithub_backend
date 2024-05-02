@@ -80,10 +80,14 @@ class endExercise(APIView):
             return Response({"error": "User is not exercising"}, status=400)
         #check to see if it hasn't been too long since the excercise started
         user.is_working = False
+        
         exercise = user.exercises.all().last()
+        heart_rate = request.data.get('avg_heartrate')
+        if(heart_rate and heart_rate>0):
+            exercise.avg_hearate=heart_rate
         exercise.end_time = timezone.now()
         user.save(update_fields=['is_working'])
-        exercise.save(update_fields=['end_time']);
+        exercise.save(update_fields=['end_time'])
         return Response({"success": "Age updated successfully."}, status=200)
 
 
@@ -101,7 +105,8 @@ class getAllExercises(APIView):
                 "end":str(itera.end_time),
                 "fuffilment":str(itera.fuffilment),
                 "name":itera.workout_type.name,
-                "category":itera.workout_type.category
+                "category":itera.workout_type.category,
+                "avg_heartrate":itera.avg_heartrate
             })
         data = {
             'ex': ret_list,
@@ -135,6 +140,7 @@ class FriendFeed(APIView):
                 'category':exercise.workout_type.category},
                 'expectedTime': exercise.fuffilment,
                 'user': exercise.customuser_set.first().username,
+                "avg_heartrate" :exercise.avg_heartrate
             })
 
         return Response(exercise_data, status=200)

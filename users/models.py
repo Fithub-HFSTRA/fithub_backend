@@ -38,6 +38,8 @@ class Exercise(models.Model):
     end_time = models.DateTimeField(null=True)
     workout_type = models.ForeignKey(Workout_Type, on_delete=models.CASCADE)
     fuffilment = models.FloatField(blank=True, null=False, default=False)
+    avg_heartrate = models.FloatField(blank=True, null=True, default=False)
+
     def __str__(self):
         return f'{self.workout_type.name} '
 
