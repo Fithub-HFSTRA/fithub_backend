@@ -85,8 +85,10 @@ class endExercise(APIView):
         
         exercise = user.exercises.all().last()
         heart_rate = request.data.get('avg_heartrate')
+        print("THIS IS SUPPOSED TO BE HEARTRATE",heart_rate)
         if(heart_rate and heart_rate>0):
-            exercise.avg_hearate=heart_rate
+            exercise.avg_heartrate=heart_rate
+            exercise.save(update_fields=['avg_heartrate'])
         exercise.end_time = timezone.now()
         user.save(update_fields=['is_working'])
         exercise.save(update_fields=['end_time'])
@@ -142,7 +144,7 @@ class FriendFeed(APIView):
                 'category':exercise.workout_type.category},
                 'expectedTime': exercise.fuffilment,
                 'user': exercise.customuser_set.first().username,
-                "avg_heartrate" :exercise.avg_heartrate
+                "avg_heartrate":exercise.avg_heartrate
             })
 
         return Response(exercise_data, status=200)

@@ -98,6 +98,12 @@ DATABASES = {
     }
 }
 
+#REnder postgreSQL data bse live
+import dj_database_url
+
+DATABASES = {
+    'default': dj_database_url.parse('postgres://production_database_p0a6_user:PcG8jlLjdQzdAfU3jiaN3FkkcFCWgKHx@dpg-copk2s779t8c73fvmgmg-a.ohio-postgres.render.com/production_database_p0a6')
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
